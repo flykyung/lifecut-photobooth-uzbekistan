@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
-  <title>📸 인생네컷 포토부스</title>
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuyGoO2VmOy0iOuTseq1kCDsnbjsg53rhKTsu7QiLAogICJzaG9ydF9uYW1lIjogIuyGoO2VmOy0iCDsnbjsg53rhKTsu7QiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiM2NjdlZWEiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSXhPVElpSUdobGFXZG9kRDBpTVRreUlqNDhjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnWm1sc2JEMGlJelkyTjJWbFlTSXZQand2YzNablBnPT0iLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+  <title>📸 송학초등학교 인생네컷</title>
   <style>
     * {
       margin: 0;
@@ -107,7 +108,7 @@
     }
     
     .timer-display {
-      font-size: 80px;
+      font-size: 55px;
       color: white;
       font-weight: bold;
       text-shadow: 0 4px 10px rgba(0,0,0,0.3);
@@ -335,6 +336,22 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
     
+    .save-notice {
+      text-align: center;
+      padding: 20px;
+      background: #fff3cd;
+      border: 2px solid #ffc107;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .save-notice p {
+      color: #856404;
+      font-size: 1.1em;
+      font-weight: bold;
+      margin: 5px 0;
+    }
+    
     /* 버튼 스타일 */
     .btn-container {
       display: flex;
@@ -384,6 +401,8 @@
     .btn-success {
       background: #4caf50;
       color: white;
+      font-size: 1.3em;
+      padding: 20px 50px;
     }
     
     .btn-success:hover {
@@ -433,14 +452,14 @@
       }
       
       .timer-display {
-        font-size: 60px;
+        font-size: 40px;
       }
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📸 인생네컷 포토부스</h1>
+    <h1>📸 송학초등학교 인생네컷</h1>
     
     <div class="step-indicator">
       <div class="step active" data-step="0">시작</div>
@@ -454,7 +473,7 @@
     <div class="screen active" id="startScreen">
       <div class="start-screen">
         <p>
-          📷 15초 간격으로 6장의 사진을 자동 촬영합니다<br>
+          📷 8초 간격으로 6장의 사진을 자동 촬영합니다<br>
           🎯 마음에 드는 4장을 선택하세요<br>
           🖼️ 원하는 프레임을 골라주세요<br>
           💾 저장하고 추억을 간직하세요!
@@ -468,7 +487,7 @@
       <div class="photo-count">📸 <span id="photoCount">0</span> / 6 장</div>
       
       <div class="timer-container">
-        <div class="timer-display" id="timerDisplay">15</div>
+        <div class="timer-display" id="timerDisplay">8</div>
         <div class="photo-progress" id="photoProgress">1번째 사진 준비중...</div>
       </div>
       
@@ -528,12 +547,17 @@
     <!-- 미리보기 및 완성 화면 -->
     <div class="screen" id="previewScreen">
       <div class="photo-count">✨ 완성된 사진입니다!</div>
+      
+      <div class="save-notice">
+        <p>📥 저장 후 갤러리에서 Canon SELPHY 앱으로 출력하세요!</p>
+        <p style="font-size: 0.9em; margin-top: 10px;">💡 프린터 WiFi에 연결되어 있는지 확인하세요</p>
+      </div>
+      
       <div class="preview-container">
         <canvas id="finalCanvas"></canvas>
       </div>
       <div class="btn-container">
         <button class="btn-success" onclick="downloadPhoto()">💾 저장하기</button>
-        <button class="btn-primary" onclick="printPhoto()">🖨️ 출력하기</button>
         <button class="btn-secondary" onclick="goToFrame()">프레임 변경</button>
         <button class="btn-danger" onclick="resetSession()">새로 시작</button>
       </div>
@@ -541,6 +565,15 @@
   </div>
   
   <script>
+    // PWA Service Worker 등록
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('data:application/javascript;base64,Y29uc3QgQ0FDSEVfTkFNRSA9ICdzb25naGFrLXBob3RvYm9vdGgtdjEnOwpjb25zdCB1cmxzVG9DYWNoZSA9IFsKICAnLicsCiAgJy4vaW5kZXguaHRtbCcKXTsKCnNlbGYuYWRkRXZlbnRMaXN0ZW5lcignaW5zdGFsbCcsIChldmVudCkgPT4gewogIGV2ZW50LndhaXRVbnRpbCgKICAgIGNhY2hlcy5vcGVuKENBQ0hFX05BTUUpCiAgICAgIC50aGVuKChjYWNoZSkgPT4gewogICAgICAgIHJldHVybiBjYWNoZS5hZGRBbGwodXJsc1RvQ2FjaGUpOwogICAgICB9KQogICk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIChldmVudCkgPT4gewogIGV2ZW50LnJlc3BvbmRXaXRoKAogICAgY2FjaGVzLm1hdGNoKGV2ZW50LnJlcXVlc3QpCiAgICAgIC50aGVuKChyZXNwb25zZSkgPT4gewogICAgICAgIHJldHVybiByZXNwb25zZSB8fCBmZXRjaChldmVudC5yZXF1ZXN0KTsKICAgICAgfSkKICApOwp9KTs=')
+          .then(() => console.log('✅ PWA 오프라인 모드 활성화'))
+          .catch(err => console.log('Service Worker 등록 실패:', err));
+      });
+    }
+    
     // 전역 변수
     let currentStep = 0;
     let capturedPhotos = [];
@@ -550,7 +583,7 @@
     let stream = null;
     let captureInterval = null;
     let countdownInterval = null;
-    let remainingTime = 15;
+    let remainingTime = 8;
     let currentPhotoNumber = 1;
     let isCapturing = false;
     
@@ -610,7 +643,7 @@
     function startAutoCaptureSequence() {
       isCapturing = true;
       currentPhotoNumber = 1;
-      remainingTime = 15;
+      remainingTime = 8;
       updateTimerDisplay();
       
       // 카운트다운 시작
@@ -700,7 +733,7 @@
       if (capturedPhotos.length < 6) {
         // 다음 사진을 위한 타이머 재시작
         await new Promise(resolve => setTimeout(resolve, 1000));
-        remainingTime = 15;
+        remainingTime = 8;
         updateTimerDisplay();
         countdownInterval = setInterval(() => {
           remainingTime--;
@@ -936,48 +969,12 @@
       const canvas = document.getElementById('finalCanvas');
       const link = document.createElement('a');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-      link.download = `인생네컷_${timestamp}.jpg`;
+      link.download = `송학초_인생네컷_${timestamp}.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
-      alert('사진이 저장되었습니다! 📥');
-    }
-    
-    // 사진 출력
-    function printPhoto() {
-      const canvas = document.getElementById('finalCanvas');
-      const dataUrl = canvas.toDataURL('image/jpeg', 1.0);
       
-      // 새 창에서 출력
-      const printWindow = window.open('', '_blank');
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>인생네컷 출력</title>
-            <style>
-              @page {
-                size: 4in 6in;
-                margin: 0;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-              }
-              img {
-                width: 4in;
-                height: 6in;
-                object-fit: contain;
-              }
-            </style>
-          </head>
-          <body>
-            <img src="${dataUrl}" onload="window.print(); window.close();">
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+      // 저장 완료 알림
+      alert('✅ 사진이 저장되었습니다!\n\n📱 갤러리에서 Canon SELPHY 앱으로 출력하세요!\n💡 프린터 WiFi에 연결되어 있는지 확인하세요.');
     }
     
     // 세션 리셋
@@ -995,7 +992,7 @@
       capturedPhotos = [];
       selectedPhotos = [];
       selectedFrame = 'none';
-      remainingTime = 15;
+      remainingTime = 8;
       currentPhotoNumber = 1;
       isCapturing = false;
       
