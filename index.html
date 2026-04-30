@@ -693,9 +693,6 @@
       canvas.width = 1080;
       canvas.height = 1440;
       
-      // ✅ 좌우반전 없이 정상으로 저장 (배경 글씨 정상)
-      ctx.save();
-      
       // 비디오를 3:4 비율로 크롭하여 그리기
       const videoAspect = video.videoWidth / video.videoHeight;
       const targetAspect = 3 / 4;
@@ -716,11 +713,8 @@
         sy = (video.videoHeight - sHeight) / 2;
       }
       
-      // ✅ 좌우반전 적용하여 그리기 (미러 이미지 제거)
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
+      // ✅ 좌우반전 없이 정상으로 그리기 (배경 글씨 정상)
       ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
       
       const photoData = canvas.toDataURL('image/jpeg', 0.95);
       capturedPhotos.push(photoData);
