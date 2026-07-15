@@ -354,6 +354,48 @@
       padding: 20px;
     }
 
+    .sticker-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .sticker-thumb {
+      aspect-ratio: 1/1;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f8f9fa;
+      transition: all 0.2s;
+    }
+
+    .sticker-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .sticker-thumb.clickable {
+      cursor: pointer;
+    }
+
+    .sticker-thumb.clickable:hover {
+      transform: scale(1.05);
+      border-color: #667eea;
+    }
+
+    .sticker-picker {
+      margin-bottom: 20px;
+    }
+
+    .sticker-picker-title {
+      text-align: center;
+      color: #666;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
     /* 미리보기 화면 */
     .preview-container {
       max-width: 500px;
@@ -659,11 +701,11 @@
             <p><strong>📐 스티커 제작 안내:</strong></p>
             <p>• 형식: <strong>투명 배경 PNG</strong> 권장</p>
             <p>• 사진/프레임보다 작은 크기로 올라갑니다</p>
-            <p>• 목록에서 누르면 완성 화면에 추가되고, 여러 번 누르면 여러 개 추가됩니다</p>
-            <p>• 완성 화면에서 손가락으로 이동, 파란 점으로 크기·회전 조절이 가능합니다</p>
+            <p>• 업로드하면 아래 목록에 등록됩니다 (여러 명이 나눠 쓸 수 있도록 미리 준비)</p>
+            <p>• 실제로 사진에 붙이는 건 완성 화면에서 목록 중 골라서 추가합니다</p>
           </div>
         </div>
-        <div class="frame-list" id="stickerList">
+        <div class="sticker-grid" id="stickerList">
           <p class="sticker-empty-hint" id="stickerEmptyHint">아직 업로드한 스티커가 없습니다</p>
         </div>
       </div>
@@ -689,6 +731,14 @@
         <canvas id="finalCanvas"></canvas>
         <div id="stickerLayer"></div>
       </div>
+
+      <div class="sticker-picker">
+        <p class="sticker-picker-title">✨ 스티커 추가하기</p>
+        <div class="sticker-grid" id="previewStickerPicker">
+          <p class="sticker-empty-hint" id="previewStickerEmptyHint">업로드된 스티커가 없습니다 (프레임 화면의 스티커 탭에서 먼저 업로드하세요)</p>
+        </div>
+      </div>
+
       <div class="btn-container">
         <button class="btn-success" onclick="downloadPhoto()">💾 저장하기</button>
         <button class="btn-secondary" onclick="goToFrame()">프레임/스티커 변경</button>
@@ -1030,7 +1080,7 @@
       event.currentTarget.classList.add('selected');
     }
     
-    // 커스텀 스티커 업로드
+    // 커스텀 스티커 업로드 (라이브러리에만 등록, 사진에 바로 추가하지 않음)
     function uploadCustomSticker(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -1039,22 +1089,36 @@
       reader.onload = function(e) {
         customStickers.push(e.target.result);
         addStickerToList(e.target.result);
-        // 업로드하면 바로 완성 이미지 위에 하나 추가
-        addStickerInstance(e.target.result);
       };
       reader.readAsDataURL(file);
       event.target.value = '';
     }
 
-    // 스티커 목록에 추가
+    // 스티커 라이브러리 목록에 추가 (프레임 화면 - 열람 전용)
     function addStickerToList(stickerSrc) {
       document.getElementById('stickerEmptyHint')?.remove();
       const stickerList = document.getElementById('stickerList');
       const div = document.createElement('div');
-      div.className = 'frame-option';
+      div.className = 'sticker-thumb';
       div.innerHTML = `<img src="${stickerSrc}" alt="스티커">`;
-      div.onclick = () => addStickerInstance(stickerSrc);
       stickerList.appendChild(div);
+    }
+
+    // 완성 화면의 스티커 선택 목록 그리기 (클릭하면 사진 위에 추가됨)
+    function renderPreviewStickerPicker() {
+      const picker = document.getElementById('previewStickerPicker');
+      picker.innerHTML = '';
+      if (customStickers.length === 0) {
+        picker.innerHTML = '<p class="sticker-empty-hint">업로드된 스티커가 없습니다 (프레임 화면의 스티커 탭에서 먼저 업로드하세요)</p>';
+        return;
+      }
+      customStickers.forEach(src => {
+        const div = document.createElement('div');
+        div.className = 'sticker-thumb clickable';
+        div.innerHTML = `<img src="${src}" alt="스티커">`;
+        div.onclick = () => addStickerInstance(src);
+        picker.appendChild(div);
+      });
     }
 
     // 완성 이미지 위에 스티커 인스턴스 추가 (초기 위치/크기는 기본값, 이후 터치로 조절)
@@ -1231,6 +1295,7 @@
     async function goToPreview() {
       updateStep(4);
       showScreen('previewScreen');
+      renderPreviewStickerPicker();
       await generateFinalImage();
       renderStickerLayer();
     }
