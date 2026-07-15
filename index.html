@@ -322,12 +322,118 @@
       height: 100%;
       object-fit: contain;
     }
-    
+
+    /* 프레임/스티커 탭 */
+    .frame-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      background: #f0f0f0;
+      color: #666;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .sticker-empty-hint {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: #999;
+      padding: 20px;
+    }
+
     /* 미리보기 화면 */
     .preview-container {
       max-width: 500px;
       margin: 0 auto 20px;
       position: relative;
+    }
+
+    #stickerLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: auto;
+    }
+
+    .sticker-item {
+      position: absolute;
+      pointer-events: auto;
+      touch-action: none;
+      cursor: grab;
+    }
+
+    .sticker-item img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    .sticker-item.active {
+      outline: 2px dashed #667eea;
+      outline-offset: 2px;
+    }
+
+    .sticker-delete,
+    .sticker-resize {
+      position: absolute;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    .sticker-delete {
+      top: -14px;
+      right: -14px;
+      width: 28px;
+      height: 28px;
+      background: #f44336;
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .sticker-resize {
+      bottom: -14px;
+      right: -14px;
+      width: 26px;
+      height: 26px;
+      background: #667eea;
+      cursor: se-resize;
+    }
+
+    .sticker-item.active .sticker-delete,
+    .sticker-item.active .sticker-resize {
+      display: flex;
+    }
+
+    .preview-hint {
+      text-align: center;
+      color: #666;
+      font-size: 0.9em;
+      margin-bottom: 15px;
     }
     
     #finalCanvas {
@@ -519,7 +625,12 @@
     
     <!-- 프레임 선택 화면 -->
     <div class="screen" id="frameScreen">
-      <div class="frame-selection">
+      <div class="frame-tabs">
+        <button class="tab-btn active" id="frameTabBtn" onclick="switchFrameTab('frame')">🖼️ 프레임</button>
+        <button class="tab-btn" id="stickerTabBtn" onclick="switchFrameTab('sticker')">✨ 스티커</button>
+      </div>
+
+      <div class="frame-selection" id="frameTabPanel">
         <div class="frame-upload">
           <p style="margin-bottom: 15px; color: #666; font-weight: bold;">🎨 프레임 이미지를 업로드하세요</p>
           <input type="file" id="frameUpload" accept="image/*" onchange="uploadCustomFrame(event)">
@@ -538,6 +649,25 @@
           </div>
         </div>
       </div>
+
+      <div class="frame-selection" id="stickerTabPanel" style="display: none;">
+        <div class="frame-upload">
+          <p style="margin-bottom: 15px; color: #666; font-weight: bold;">✨ 스티커 이미지를 업로드하세요</p>
+          <input type="file" id="stickerUpload" accept="image/png,image/*" onchange="uploadCustomSticker(event)">
+          <label for="stickerUpload">스티커 업로드</label>
+          <div class="frame-upload-info">
+            <p><strong>📐 스티커 제작 안내:</strong></p>
+            <p>• 형식: <strong>투명 배경 PNG</strong> 권장</p>
+            <p>• 사진/프레임보다 작은 크기로 올라갑니다</p>
+            <p>• 목록에서 누르면 완성 화면에 추가되고, 여러 번 누르면 여러 개 추가됩니다</p>
+            <p>• 완성 화면에서 손가락으로 이동, 파란 점으로 크기·회전 조절이 가능합니다</p>
+          </div>
+        </div>
+        <div class="frame-list" id="stickerList">
+          <p class="sticker-empty-hint" id="stickerEmptyHint">아직 업로드한 스티커가 없습니다</p>
+        </div>
+      </div>
+
       <div class="btn-container">
         <button class="btn-primary" onclick="goToPreview()">미리보기</button>
         <button class="btn-secondary" onclick="goToSelection()">이전으로</button>
@@ -547,23 +677,26 @@
     <!-- 미리보기 및 완성 화면 -->
     <div class="screen" id="previewScreen">
       <div class="photo-count">✨ 완성된 사진입니다!</div>
-      
+
       <div class="save-notice">
         <p>📥 저장 후 갤러리에서 Canon SELPHY 앱으로 출력하세요!</p>
         <p style="font-size: 0.9em; margin-top: 10px;">💡 프린터 WiFi에 연결되어 있는지 확인하세요</p>
       </div>
-      
+
+      <p class="preview-hint">💡 스티커는 손가락으로 움직이고, 파란 점을 끌어서 크기·회전을 조절하세요</p>
+
       <div class="preview-container">
         <canvas id="finalCanvas"></canvas>
+        <div id="stickerLayer"></div>
       </div>
       <div class="btn-container">
         <button class="btn-success" onclick="downloadPhoto()">💾 저장하기</button>
-        <button class="btn-secondary" onclick="goToFrame()">프레임 변경</button>
+        <button class="btn-secondary" onclick="goToFrame()">프레임/스티커 변경</button>
         <button class="btn-danger" onclick="resetSession()">새로 시작</button>
       </div>
     </div>
   </div>
-  
+
   <script>
     // PWA Service Worker 등록
     if ('serviceWorker' in navigator) {
@@ -586,6 +719,10 @@
     let remainingTime = 8;
     let currentPhotoNumber = 1;
     let isCapturing = false;
+    let customStickers = [];
+    let placedStickers = [];
+    let stickerIdSeq = 0;
+    let activeStickerId = null;
 
     // 단계 업데이트
     function updateStep(step) {
@@ -838,7 +975,15 @@
       updateStep(3);
       showScreen('frameScreen');
     }
-    
+
+    // 프레임/스티커 탭 전환
+    function switchFrameTab(tab) {
+      document.getElementById('frameTabPanel').style.display = tab === 'frame' ? 'block' : 'none';
+      document.getElementById('stickerTabPanel').style.display = tab === 'sticker' ? 'block' : 'none';
+      document.getElementById('frameTabBtn').classList.toggle('active', tab === 'frame');
+      document.getElementById('stickerTabBtn').classList.toggle('active', tab === 'sticker');
+    }
+
     // 커스텀 프레임 업로드
     function uploadCustomFrame(event) {
       const file = event.target.files[0];
@@ -885,57 +1030,250 @@
       event.currentTarget.classList.add('selected');
     }
     
+    // 커스텀 스티커 업로드
+    function uploadCustomSticker(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        customStickers.push(e.target.result);
+        addStickerToList(e.target.result);
+        // 업로드하면 바로 완성 이미지 위에 하나 추가
+        addStickerInstance(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    // 스티커 목록에 추가
+    function addStickerToList(stickerSrc) {
+      document.getElementById('stickerEmptyHint')?.remove();
+      const stickerList = document.getElementById('stickerList');
+      const div = document.createElement('div');
+      div.className = 'frame-option';
+      div.innerHTML = `<img src="${stickerSrc}" alt="스티커">`;
+      div.onclick = () => addStickerInstance(stickerSrc);
+      stickerList.appendChild(div);
+    }
+
+    // 완성 이미지 위에 스티커 인스턴스 추가 (초기 위치/크기는 기본값, 이후 터치로 조절)
+    function addStickerInstance(src) {
+      const id = ++stickerIdSeq;
+      const offset = (placedStickers.length % 5) * 0.04;
+      const sticker = {
+        id,
+        src,
+        aspect: 1,
+        xRatio: 0.375 + offset,
+        yRatio: 0.375 + offset,
+        wRatio: 0.25,
+        rotation: 0
+      };
+
+      const img = new Image();
+      img.onload = () => {
+        sticker.aspect = img.naturalWidth / img.naturalHeight;
+        if (document.getElementById('previewScreen').classList.contains('active')) {
+          renderStickerLayer();
+        }
+      };
+      img.src = src;
+
+      placedStickers.push(sticker);
+      activeStickerId = id;
+
+      if (document.getElementById('previewScreen').classList.contains('active')) {
+        renderStickerLayer();
+      }
+    }
+
+    // 스티커 인스턴스 삭제
+    function removeStickerInstance(id) {
+      placedStickers = placedStickers.filter(s => s.id !== id);
+      if (activeStickerId === id) activeStickerId = null;
+      renderStickerLayer();
+    }
+
+    // 스티커 선택 표시
+    function setActiveSticker(id) {
+      activeStickerId = id;
+      document.querySelectorAll('.sticker-item').forEach(el => {
+        el.classList.toggle('active', Number(el.dataset.stickerId) === id);
+      });
+    }
+
+    // 스티커 엘리먼트 위치/크기/회전 반영
+    function updateStickerElementStyle(el, sticker, rect) {
+      const aspect = sticker.aspect || 1;
+      const widthPx = sticker.wRatio * rect.width;
+      const heightPx = widthPx / aspect;
+      el.style.left = (sticker.xRatio * rect.width) + 'px';
+      el.style.top = (sticker.yRatio * rect.height) + 'px';
+      el.style.width = widthPx + 'px';
+      el.style.height = heightPx + 'px';
+      el.style.transform = `rotate(${sticker.rotation}deg)`;
+    }
+
+    // 미리보기 위 스티커 레이어 그리기
+    function renderStickerLayer() {
+      const layer = document.getElementById('stickerLayer');
+      if (!layer) return;
+      layer.innerHTML = '';
+      const rect = layer.getBoundingClientRect();
+
+      placedStickers.forEach(sticker => {
+        const el = document.createElement('div');
+        el.className = 'sticker-item' + (sticker.id === activeStickerId ? ' active' : '');
+        el.dataset.stickerId = sticker.id;
+        el.innerHTML = `
+          <img src="${sticker.src}" alt="스티커" draggable="false">
+          <div class="sticker-delete">✕</div>
+          <div class="sticker-resize"></div>
+        `;
+        updateStickerElementStyle(el, sticker, rect);
+
+        el.addEventListener('pointerdown', (e) => onStickerPointerDown(e, sticker, el));
+        el.querySelector('.sticker-delete').addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          removeStickerInstance(sticker.id);
+        });
+        el.querySelector('.sticker-resize').addEventListener('pointerdown', (e) => {
+          onStickerResizeStart(e, sticker, el);
+        });
+
+        layer.appendChild(el);
+      });
+    }
+
+    // 스티커 드래그(이동)
+    function onStickerPointerDown(e, sticker, el) {
+      if (e.target.closest('.sticker-delete') || e.target.closest('.sticker-resize')) return;
+      e.preventDefault();
+      setActiveSticker(sticker.id);
+
+      const layer = document.getElementById('stickerLayer');
+      const rect = layer.getBoundingClientRect();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startXRatio = sticker.xRatio;
+      const startYRatio = sticker.yRatio;
+
+      try { el.setPointerCapture(e.pointerId); } catch (err) {}
+
+      function move(ev) {
+        sticker.xRatio = startXRatio + (ev.clientX - startX) / rect.width;
+        sticker.yRatio = startYRatio + (ev.clientY - startY) / rect.height;
+        updateStickerElementStyle(el, sticker, rect);
+      }
+      function up() {
+        el.removeEventListener('pointermove', move);
+        el.removeEventListener('pointerup', up);
+        el.removeEventListener('pointercancel', up);
+      }
+      el.addEventListener('pointermove', move);
+      el.addEventListener('pointerup', up);
+      el.addEventListener('pointercancel', up);
+    }
+
+    // 스티커 크기/회전 조절 (모서리 핸들)
+    function onStickerResizeStart(e, sticker, el) {
+      e.preventDefault();
+      e.stopPropagation();
+      setActiveSticker(sticker.id);
+
+      const layer = document.getElementById('stickerLayer');
+      const rect = layer.getBoundingClientRect();
+      const handle = e.currentTarget;
+
+      const widthPx = sticker.wRatio * rect.width;
+      const heightPx = widthPx / (sticker.aspect || 1);
+      const centerX = rect.left + sticker.xRatio * rect.width + widthPx / 2;
+      const centerY = rect.top + sticker.yRatio * rect.height + heightPx / 2;
+
+      const startDist = Math.hypot(e.clientX - centerX, e.clientY - centerY) || 1;
+      const startAngle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI;
+      const startWRatio = sticker.wRatio;
+      const startRotation = sticker.rotation;
+
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+
+      function move(ev) {
+        const dist = Math.hypot(ev.clientX - centerX, ev.clientY - centerY);
+        const angle = Math.atan2(ev.clientY - centerY, ev.clientX - centerX) * 180 / Math.PI;
+        const scale = dist / startDist;
+        sticker.wRatio = Math.min(Math.max(startWRatio * scale, 0.05), 1.5);
+        sticker.rotation = startRotation + (angle - startAngle);
+        updateStickerElementStyle(el, sticker, rect);
+      }
+      function up() {
+        handle.removeEventListener('pointermove', move);
+        handle.removeEventListener('pointerup', up);
+        handle.removeEventListener('pointercancel', up);
+      }
+      handle.addEventListener('pointermove', move);
+      handle.addEventListener('pointerup', up);
+      handle.addEventListener('pointercancel', up);
+    }
+
+    // 이미지 로딩 헬퍼
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
     // 미리보기로
-    function goToPreview() {
+    async function goToPreview() {
       updateStep(4);
       showScreen('previewScreen');
-      generateFinalImage();
+      await generateFinalImage();
+      renderStickerLayer();
     }
-    
-    // 최종 이미지 생성 (4×6인치, 300 DPI)
-    function generateFinalImage() {
+
+    // 최종 이미지 생성 (4×6인치, 300 DPI) - 프레임 + 사진만 (스티커는 화면 위 별도 레이어로 편집)
+    async function generateFinalImage() {
       const canvas = document.getElementById('finalCanvas');
       const ctx = canvas.getContext('2d');
-      
+
       // 4×6 인치, 300 DPI = 1200×1800 픽셀
       canvas.width = 1200;
       canvas.height = 1800;
-      
+
       // 배경색 (흰색)
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+
       // 프레임이 있으면 먼저 깔고, 그 위에 사진을 그리기
       if (selectedFrame !== 'none') {
-        const frameImg = new Image();
-        frameImg.onload = function() {
-          ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-          drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
-        };
-        frameImg.src = selectedFrame;
-      } else {
-        drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
+        const frameImg = await loadImage(selectedFrame);
+        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
       }
+      await drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
     }
-    
+
     // 캔버스에 사진 그리기
-    function drawPhotosOnCanvas(ctx, canvasWidth, canvasHeight) {
+    async function drawPhotosOnCanvas(ctx, canvasWidth, canvasHeight) {
       // 레이아웃 계산
       const marginTop = 70;        // 상단 여백 (축소)
       const marginBottom = 180;    // 하단 여백 (10%)
       const marginSide = 60;       // 좌우 여백
-      
+
       // 사진 영역 계산
       const availableHeight = canvasHeight - marginTop - marginBottom;
       const availableWidth = canvasWidth - (marginSide * 2);
-      
+
       // 2×2 그리드이므로 사진 크기 계산
       // 간격을 자동으로 계산하여 하단 여백 확보
       const gap = 30; // 사진 간격
-      
+
       const photoWidth = (availableWidth - gap) / 2;
       const photoHeight = (availableHeight - gap) / 2;
-      
+
       // 사진 위치 (선택 순서대로: 좌상, 우상, 좌하, 우하)
       const positions = [
         { x: marginSide, y: marginTop },
@@ -943,29 +1281,56 @@
         { x: marginSide, y: marginTop + photoHeight + gap },
         { x: marginSide + photoWidth + gap, y: marginTop + photoHeight + gap }
       ];
-      
-      let loadedImages = 0;
-      const totalImages = 4;
-      
-      selectedPhotos.forEach((photoIdx, i) => {
-        const img = new Image();
-        img.onload = function() {
-          ctx.drawImage(img, positions[i].x, positions[i].y, photoWidth, photoHeight);
-          loadedImages++;
-        };
-        img.src = capturedPhotos[photoIdx];
+
+      const images = await Promise.all(selectedPhotos.map(photoIdx => loadImage(capturedPhotos[photoIdx])));
+      images.forEach((img, i) => {
+        ctx.drawImage(img, positions[i].x, positions[i].y, photoWidth, photoHeight);
       });
     }
-    
+
+    // 저장용으로 프레임 + 사진 + 스티커를 하나의 캔버스에 합성
+    async function buildExportCanvas() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 1800;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (selectedFrame !== 'none') {
+        const frameImg = await loadImage(selectedFrame);
+        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+      }
+      await drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
+
+      for (const sticker of placedStickers) {
+        const img = await loadImage(sticker.src);
+        const aspect = img.naturalWidth / img.naturalHeight;
+        const widthPx = sticker.wRatio * canvas.width;
+        const heightPx = widthPx / aspect;
+        const centerX = sticker.xRatio * canvas.width + widthPx / 2;
+        const centerY = sticker.yRatio * canvas.height + heightPx / 2;
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(sticker.rotation * Math.PI / 180);
+        ctx.drawImage(img, -widthPx / 2, -heightPx / 2, widthPx, heightPx);
+        ctx.restore();
+      }
+
+      return canvas;
+    }
+
     // 사진 다운로드
-    function downloadPhoto() {
-      const canvas = document.getElementById('finalCanvas');
+    async function downloadPhoto() {
+      const canvas = await buildExportCanvas();
       const link = document.createElement('a');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
       link.download = `우즈베키스탄연수_인생네컷_${timestamp}.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
-      
+
       // 저장 완료 알림
       alert('✅ 사진이 저장되었습니다!\n\n📱 갤러리에서 Canon SELPHY 앱으로 출력하세요!\n💡 프린터 WiFi에 연결되어 있는지 확인하세요.');
     }
@@ -988,15 +1353,19 @@
       remainingTime = 8;
       currentPhotoNumber = 1;
       isCapturing = false;
-      
+      placedStickers = [];
+      activeStickerId = null;
+
       // UI 초기화
       updateStep(0);
       showScreen('startScreen');
+      switchFrameTab('frame');
       document.getElementById('photoCount').textContent = '0';
       document.getElementById('capturedPhotos').innerHTML = '';
       document.getElementById('selectedCount').textContent = '0';
       document.getElementById('confirmSelectionBtn').disabled = true;
-      
+      document.getElementById('stickerLayer').innerHTML = '';
+
       // 프레임 선택 초기화
       document.querySelectorAll('.frame-option').forEach(el => {
         el.classList.remove('selected');
@@ -1005,6 +1374,13 @@
         }
       });
     }
+
+    // 미리보기 화면에서 창 크기가 바뀌면 스티커 위치 재계산
+    window.addEventListener('resize', () => {
+      if (document.getElementById('previewScreen').classList.contains('active')) {
+        renderStickerLayer();
+      }
+    });
     
     // 페이지 종료 시 정리
     window.addEventListener('beforeunload', () => {
