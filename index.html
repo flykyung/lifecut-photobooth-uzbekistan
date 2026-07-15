@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#667eea">
   <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIuyGoO2VmOy0iOuTseq1kCDsnbjsg53rhKTsu7QiLAogICJzaG9ydF9uYW1lIjogIuyGoO2VmOy0iCDsnbjsg53rhKTsu7QiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiM2NjdlZWEiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSXhPVElpSUdobGFXZG9kRDBpTVRreUlqNDhjbVZqZENCM2FXUjBhRDBpTVRreUlpQm9aV2xuYUhROUlqRTVNaUlnWm1sc2JEMGlJelkyTjJWbFlTSXZQand2YzNablBnPT0iLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
-  <title>📸 송학초등학교 인생네컷</title>
+  <title>📸 2026 우즈베키스탄 현지교원 역량강화 연수</title>
   <style>
     * {
       margin: 0;
@@ -36,7 +36,7 @@
       text-align: center;
       color: #667eea;
       margin-bottom: 30px;
-      font-size: 2.5em;
+      font-size: 1.6em;
     }
     
     .step-indicator {
@@ -423,7 +423,7 @@
     /* 반응형 */
     @media (max-width: 768px) {
       h1 {
-        font-size: 1.8em;
+        font-size: 1.15em;
       }
       
       .step {
@@ -459,13 +459,13 @@
 </head>
 <body>
   <div class="container">
-    <h1>📸 송학초등학교 인생네컷</h1>
+    <h1>📸 2026 우즈베키스탄 현지교원 역량강화 연수</h1>
     
     <div class="step-indicator">
       <div class="step active" data-step="0">시작</div>
-      <div class="step" data-step="1">촬영</div>
-      <div class="step" data-step="2">선택</div>
-      <div class="step" data-step="3">프레임</div>
+      <div class="step" data-step="1">프레임</div>
+      <div class="step" data-step="2">촬영</div>
+      <div class="step" data-step="3">선택</div>
       <div class="step" data-step="4">완성</div>
     </div>
     
@@ -473,9 +473,9 @@
     <div class="screen active" id="startScreen">
       <div class="start-screen">
         <p>
+          🖼️ 원하는 프레임을 먼저 골라주세요<br>
           📷 8초 간격으로 6장의 사진을 자동 촬영합니다<br>
           🎯 마음에 드는 4장을 선택하세요<br>
-          🖼️ 원하는 프레임을 골라주세요<br>
           💾 저장하고 추억을 간직하세요!
         </p>
         <button class="btn-primary" onclick="startPhotoSession()">시작하기</button>
@@ -539,11 +539,11 @@
         </div>
       </div>
       <div class="btn-container">
-        <button class="btn-primary" onclick="goToPreview()">미리보기</button>
-        <button class="btn-secondary" onclick="goToSelection()">이전으로</button>
+        <button class="btn-primary" id="frameNextBtn" onclick="proceedFromFrame()">다음</button>
+        <button class="btn-secondary" id="frameBackBtn" onclick="goBackFromFrame()">처음으로</button>
       </div>
     </div>
-    
+
     <!-- 미리보기 및 완성 화면 -->
     <div class="screen" id="previewScreen">
       <div class="photo-count">✨ 완성된 사진입니다!</div>
@@ -586,7 +586,8 @@
     let remainingTime = 8;
     let currentPhotoNumber = 1;
     let isCapturing = false;
-    
+    let cameFromPreview = false;
+
     // 단계 업데이트
     function updateStep(step) {
       currentStep = step;
@@ -603,9 +604,18 @@
       document.getElementById(screenId).classList.add('active');
     }
     
-    // 세션 시작
-    async function startPhotoSession() {
+    // 세션 시작 (먼저 프레임을 선택)
+    function startPhotoSession() {
+      cameFromPreview = false;
       updateStep(1);
+      showScreen('frameScreen');
+      document.getElementById('frameNextBtn').textContent = '다음';
+      document.getElementById('frameBackBtn').textContent = '처음으로';
+    }
+
+    // 촬영 화면으로 (프레임 선택 후)
+    async function goToCamera() {
+      updateStep(2);
       showScreen('cameraScreen');
       await startCamera();
       startAutoCaptureSequence();
@@ -771,7 +781,7 @@
     
     // 선택 화면으로
     function goToSelection() {
-      updateStep(2);
+      updateStep(3);
       showScreen('selectionScreen');
       displaySelectionGrid();
     }
@@ -830,13 +840,34 @@
         alert('정확히 4장을 선택해주세요!');
         return;
       }
-      goToFrame();
+      goToPreview();
     }
-    
-    // 프레임 화면으로
+
+    // 프레임 화면으로 (미리보기에서 프레임을 다시 바꿀 때)
     function goToFrame() {
-      updateStep(3);
+      cameFromPreview = true;
+      updateStep(1);
       showScreen('frameScreen');
+      document.getElementById('frameNextBtn').textContent = '적용하기';
+      document.getElementById('frameBackBtn').textContent = '취소';
+    }
+
+    // 프레임 선택 후 다음 단계로
+    function proceedFromFrame() {
+      if (cameFromPreview) {
+        goToPreview();
+      } else {
+        goToCamera();
+      }
+    }
+
+    // 프레임 화면에서 뒤로
+    function goBackFromFrame() {
+      if (cameFromPreview) {
+        goToPreview();
+      } else {
+        resetSession();
+      }
     }
     
     // 커스텀 프레임 업로드
@@ -962,7 +993,7 @@
       const canvas = document.getElementById('finalCanvas');
       const link = document.createElement('a');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
-      link.download = `송학초_인생네컷_${timestamp}.jpg`;
+      link.download = `우즈베키스탄연수_인생네컷_${timestamp}.jpg`;
       link.href = canvas.toDataURL('image/jpeg', 0.95);
       link.click();
       
