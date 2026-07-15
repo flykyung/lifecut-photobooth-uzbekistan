@@ -675,7 +675,7 @@
       <div class="frame-selection" id="frameTabPanel">
         <div class="frame-upload">
           <p style="margin-bottom: 15px; color: #666; font-weight: bold;">🎨 프레임 이미지를 업로드하세요</p>
-          <input type="file" id="frameUpload" accept="image/*" onchange="uploadCustomFrame(event)">
+          <input type="file" id="frameUpload" accept="image/*" multiple onchange="uploadCustomFrame(event)">
           <label for="frameUpload">프레임 업로드</label>
           <div class="frame-upload-info">
             <p><strong>📐 프레임 제작 사양:</strong></p>
@@ -695,7 +695,7 @@
       <div class="frame-selection" id="stickerTabPanel" style="display: none;">
         <div class="frame-upload">
           <p style="margin-bottom: 15px; color: #666; font-weight: bold;">✨ 스티커 이미지를 업로드하세요</p>
-          <input type="file" id="stickerUpload" accept="image/png,image/*" onchange="uploadCustomSticker(event)">
+          <input type="file" id="stickerUpload" accept="image/png,image/*" multiple onchange="uploadCustomSticker(event)">
           <label for="stickerUpload">스티커 업로드</label>
           <div class="frame-upload-info">
             <p><strong>📐 스티커 제작 안내:</strong></p>
@@ -1034,19 +1034,24 @@
       document.getElementById('stickerTabBtn').classList.toggle('active', tab === 'sticker');
     }
 
-    // 커스텀 프레임 업로드
+    // 커스텀 프레임 업로드 (여러 장 동시 선택 가능, 마지막 파일이 자동 선택됨)
     function uploadCustomFrame(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        customFrames.push(e.target.result);
-        addFrameToList(e.target.result, `커스텀 ${customFrames.length}`);
-        // 자동으로 선택
-        selectFrameByData(e.target.result);
-      };
-      reader.readAsDataURL(file);
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
+      event.target.value = '';
+
+      files.forEach((file, idx) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          customFrames.push(e.target.result);
+          addFrameToList(e.target.result, `커스텀 ${customFrames.length}`);
+          // 마지막으로 선택한 파일을 자동으로 선택
+          if (idx === files.length - 1) {
+            selectFrameByData(e.target.result);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
     }
     
     // 프레임 목록에 추가
@@ -1080,18 +1085,20 @@
       event.currentTarget.classList.add('selected');
     }
     
-    // 커스텀 스티커 업로드 (라이브러리에만 등록, 사진에 바로 추가하지 않음)
+    // 커스텀 스티커 업로드 (여러 장 동시 선택 가능, 라이브러리에만 등록)
     function uploadCustomSticker(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        customStickers.push(e.target.result);
-        addStickerToList(e.target.result);
-      };
-      reader.readAsDataURL(file);
+      const files = Array.from(event.target.files);
+      if (files.length === 0) return;
       event.target.value = '';
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          customStickers.push(e.target.result);
+          addStickerToList(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      });
     }
 
     // 스티커 라이브러리 목록에 추가 (프레임 화면 - 열람 전용)
