@@ -463,9 +463,9 @@
     
     <div class="step-indicator">
       <div class="step active" data-step="0">시작</div>
-      <div class="step" data-step="1">프레임</div>
-      <div class="step" data-step="2">촬영</div>
-      <div class="step" data-step="3">선택</div>
+      <div class="step" data-step="1">촬영</div>
+      <div class="step" data-step="2">선택</div>
+      <div class="step" data-step="3">프레임</div>
       <div class="step" data-step="4">완성</div>
     </div>
     
@@ -473,9 +473,9 @@
     <div class="screen active" id="startScreen">
       <div class="start-screen">
         <p>
-          🖼️ 원하는 프레임을 먼저 골라주세요<br>
           📷 8초 간격으로 6장의 사진을 자동 촬영합니다<br>
           🎯 마음에 드는 4장을 선택하세요<br>
+          🖼️ 원하는 프레임을 골라주세요<br>
           💾 저장하고 추억을 간직하세요!
         </p>
         <button class="btn-primary" onclick="startPhotoSession()">시작하기</button>
@@ -528,7 +528,7 @@
             <p><strong>📐 프레임 제작 사양:</strong></p>
             <p>• 크기: <strong>1200 × 1800 픽셀</strong> (4×6 인치, 300 DPI)</p>
             <p>• 형식: PNG 또는 JPG</p>
-            <p>• 사진은 프레임 아래에 배치되고, 프레임이 위에 덮입니다</p>
+            <p>• 프레임이 아래에 깔리고, 사진이 그 위에 배치됩니다</p>
             <p>• 상단 여백: 약 70px / 하단 여백: 약 180px</p>
           </div>
         </div>
@@ -539,8 +539,8 @@
         </div>
       </div>
       <div class="btn-container">
-        <button class="btn-primary" id="frameNextBtn" onclick="proceedFromFrame()">다음</button>
-        <button class="btn-secondary" id="frameBackBtn" onclick="goBackFromFrame()">처음으로</button>
+        <button class="btn-primary" onclick="goToPreview()">미리보기</button>
+        <button class="btn-secondary" onclick="goToSelection()">이전으로</button>
       </div>
     </div>
 
@@ -586,7 +586,6 @@
     let remainingTime = 8;
     let currentPhotoNumber = 1;
     let isCapturing = false;
-    let cameFromPreview = false;
 
     // 단계 업데이트
     function updateStep(step) {
@@ -604,18 +603,9 @@
       document.getElementById(screenId).classList.add('active');
     }
     
-    // 세션 시작 (먼저 프레임을 선택)
-    function startPhotoSession() {
-      cameFromPreview = false;
+    // 세션 시작
+    async function startPhotoSession() {
       updateStep(1);
-      showScreen('frameScreen');
-      document.getElementById('frameNextBtn').textContent = '다음';
-      document.getElementById('frameBackBtn').textContent = '처음으로';
-    }
-
-    // 촬영 화면으로 (프레임 선택 후)
-    async function goToCamera() {
-      updateStep(2);
       showScreen('cameraScreen');
       await startCamera();
       startAutoCaptureSequence();
@@ -781,7 +771,7 @@
     
     // 선택 화면으로
     function goToSelection() {
-      updateStep(3);
+      updateStep(2);
       showScreen('selectionScreen');
       displaySelectionGrid();
     }
@@ -840,34 +830,13 @@
         alert('정확히 4장을 선택해주세요!');
         return;
       }
-      goToPreview();
+      goToFrame();
     }
 
-    // 프레임 화면으로 (미리보기에서 프레임을 다시 바꿀 때)
+    // 프레임 화면으로
     function goToFrame() {
-      cameFromPreview = true;
-      updateStep(1);
+      updateStep(3);
       showScreen('frameScreen');
-      document.getElementById('frameNextBtn').textContent = '적용하기';
-      document.getElementById('frameBackBtn').textContent = '취소';
-    }
-
-    // 프레임 선택 후 다음 단계로
-    function proceedFromFrame() {
-      if (cameFromPreview) {
-        goToPreview();
-      } else {
-        goToCamera();
-      }
-    }
-
-    // 프레임 화면에서 뒤로
-    function goBackFromFrame() {
-      if (cameFromPreview) {
-        goToPreview();
-      } else {
-        resetSession();
-      }
     }
     
     // 커스텀 프레임 업로드
@@ -936,16 +905,16 @@
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // 사진 먼저 그리기
-      drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
-      
-      // 프레임이 있으면 사진 위에 그리기
+      // 프레임이 있으면 먼저 깔고, 그 위에 사진을 그리기
       if (selectedFrame !== 'none') {
         const frameImg = new Image();
         frameImg.onload = function() {
           ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+          drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
         };
         frameImg.src = selectedFrame;
+      } else {
+        drawPhotosOnCanvas(ctx, canvas.width, canvas.height);
       }
     }
     
